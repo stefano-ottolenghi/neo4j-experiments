@@ -23,6 +23,31 @@ def print_friends(tx, name):
     for record in tx.run(query, name=name):
         print(record["friend.name"])
 
+def visualize_result(query_graph, nodes_text_properties):
+    visual_graph = pyvis.network.Network()
+    colors = {} # association node labels <-> colors (ex 'Person':'#ABC567')
+    
+    # all the list casting is because of frozensets
+    for node in list(query_graph.nodes):
+        
+        # If we don't yet have a color for this type of node
+        if len(node.labels.intersection(colors.keys())) == 0:
+            color = "#"+''.join([random.choice('ABCDEF0123456789') for i in range(6)])
+            colors[list(node.labels)[0]] = color
+        
+        else:
+            color = colors[list(node.labels.intersection(colors.keys()))[0]]
+        
+        node_label = dict(node.items())[nodes_text_properties[list(node.labels)[0]]]
+        visual_graph.add_node(node.element_id, node_label, color=color)
+    
+    for relationship in list(query_graph.relationships):
+        visual_graph.add_edge(relationship.start_node.element_id, 
+                              relationship.end_node.element_id, 
+                              title=relationship.type)
+    
+    visual_graph.show('network.html')
+
 with driver.session(default_access_mode=neo4j.WRITE_ACCESS) as session:
     # Clear db
     session.run("MATCH (a)-[r]-() DETACH DELETE a,r")
@@ -41,31 +66,8 @@ with driver.session(default_access_mode=neo4j.WRITE_ACCESS) as session:
     #print(result.peek().data)
     
     # Draw graph
-    visual_graph = pyvis.network.Network()
-    query_graph = result.graph()
-    colors = {} # association node labels <-> colors (ex 'Person':'#ABC567')
-    nodes_text = {'Person': 'name', 'Film': 'title'} # what property to use as text for each node
-    
-    # all the list casting is because of frozensets
-    for node in list(query_graph.nodes):
-        
-        # If we don't yet have a color for this type of node
-        if len(node.labels.intersection(colors.keys())) == 0:
-            color = "#"+''.join([random.choice('ABCDEF0123456789') for i in range(6)])
-            colors[list(node.labels)[0]] = color
-        
-        else:
-            color = colors[list(node.labels.intersection(colors.keys()))[0]]
-        
-        node_label = dict(node.items())[nodes_text[list(node.labels)[0]]]
-        visual_graph.add_node(node.element_id, node_label, color=color)
-    
-    for relationship in list(query_graph.relationships):
-        visual_graph.add_edge(relationship.start_node.element_id, 
-                              relationship.end_node.element_id, 
-                              title=relationship.type)
-    
-    visual_graph.show('network.html')
+    nodes_text_properties = {'Person': 'name', 'Film': 'title'} # what property to use as text for each node
+    visualize_result(result.graph(), nodes_text_properties)
 
 """
 >>> res = session.run("MERGE (a:Person {name: $name}) MERGE c=(a)-[:KNOWS]->(friend:Person {name: $friend_name}) RETURN c;", name='Alice', friend_name='Bob')
