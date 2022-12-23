@@ -1,0 +1,8 @@
+// Match all [code,cypher] blocks and extract content, ref https://stackoverflow.com/questions/42929764/regex-to-extract-across-multi-character-delimiter
+(?:\[source,\s*cypher[^\]]*\]\s*-{4}\s*)(.*?)\s*\-{4}
+
+// As above, but ignore queries containing $ (for params)
+(?:\[source,\s*cypher[^\]]*\]\s*-{4}\s*)([^\$]*?)\s*\-{4}
+
+// Match all [role="queryresult" snippets, extracting content between |=== and ===|
+(?:\[role="queryresult"[^\]]*\]\s*\|={3}\s*)(.*?)\s*\|\={3}
