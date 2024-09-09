@@ -7,7 +7,7 @@ import os
 
 URI = "neo4j://localhost:7687"
 AUTH = ("neo4j", "secret")
-NODE_N = 5000
+NODE_N = 10000
 
 def flush_cache():
     return
